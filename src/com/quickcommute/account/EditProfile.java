@@ -3,6 +3,7 @@ package com.quickcommute.account;
 import com.quickcommute.databases.connections.SQLiteConnection;
 import com.quickcommute.ui.authentication.Register;
 import com.quickcommute.ui.menus.View;
+import com.quickcommute.ui.topup.TopUp;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,10 +15,12 @@ import java.sql.SQLException;
 
 public class EditProfile extends User {
     private static final String SELECT_QUERY = "SELECT * FROM users WHERE (username = ? OR email = ?)";
+    private static final String DELETE_QUERY = "DELETE FROM users WHERE (username = ? OR email = ?)";
+    private Connection connection;
     BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
     public EditProfile() throws SQLException, IOException {
         try {
-            Connection connection = SQLiteConnection.getConnection();
+            connection = SQLiteConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(SELECT_QUERY);
             statement.setString(1, getUsernameOrEmail());
             statement.setString(2, getUsernameOrEmail());
@@ -27,19 +30,27 @@ public class EditProfile extends User {
                 System.out.println("Username atau email tidak ditemukan!, update gagal.\n");
             }
 
-            System.out.println("==========================================");
-            System.out.println("Username: " + resultSet.getString("username"));
-            System.out.println("Nama Lengkap: " + resultSet.getString("first_name") + " " + resultSet.getString("last_name"));
-            System.out.println("Email: " + resultSet.getString("email"));
-            System.out.println("Saldo: " + resultSet.getString("user_balance"));
-            System.out.println("==========================================");
-            System.out.println();
+            new Profile();
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        editProfile();
+        System.out.println("1. Edit Profil");
+        System.out.println("2. Top Up Saldo");
+        System.out.println("3. Kembali\n");
+        System.out.println("==========================================");
+        System.out.print("Pilih menu: ");
+        String menu = reader.readLine();
+        switch (menu) {
+            case "1" -> editProfile();
+            case "2" -> new TopUp();
+            case "3" -> View.mainMenu();
+            default -> {
+                System.out.println("Menu tidak ditemukan!");
+                new EditProfile();
+            }
+        }
     }
 
     public void editProfile() throws IOException, SQLException {
@@ -48,7 +59,8 @@ public class EditProfile extends User {
         System.out.println("1. Ubah Username" );
         System.out.println("2. Email" );
         System.out.println("3. Ubah Nama" );
-        System.out.println("4. Kembali ke menu utama" );
+        System.out.println("4. (Hapus Akun)" );
+        System.out.println("5. Kembali ke menu utama" );
         System.out.print("Masukkan pilihan: " );
         String choice = reader.readLine();
 
@@ -87,7 +99,7 @@ public class EditProfile extends User {
 
     private void updateField(String field, String newValue) throws IOException, SQLException {
         try {
-            Connection connection = SQLiteConnection.getConnection();
+            connection = SQLiteConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement("UPDATE users SET " + field + " = ? WHERE (username = ? OR email = ?)");
             statement.setString(1, newValue);
             statement.setString(2, getUsernameOrEmail());
@@ -109,5 +121,36 @@ public class EditProfile extends User {
 
         // show user details
         new EditProfile();
+    }
+
+    public void deleteAccount() throws SQLException, IOException {
+        System.out.println("Apakah anda yakin ingin menghapus akun ini? (y/n)");
+        String choice = reader.readLine();
+        if (choice.equals("y")) {
+            try {
+                connection = SQLiteConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(DELETE_QUERY);
+                statement.setString(1, getUsernameOrEmail());
+                statement.setString(2, getUsernameOrEmail());
+                statement.setString(3, getPassword());
+                statement.executeUpdate();
+
+                int rowsAffected = statement.executeUpdate();
+                if (!(rowsAffected > 0)) {
+                    System.out.println("Gagal menghapus akun!" );
+                }
+
+                System.out.println("Berhasil menghapus akun!" );
+                System.out.println();
+                new View();
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("Mengembalikan ke menu utama...");
+        View.mainMenu();
+
     }
 }

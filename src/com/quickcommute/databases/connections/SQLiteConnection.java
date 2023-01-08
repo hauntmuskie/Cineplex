@@ -40,8 +40,7 @@ public class SQLiteConnection {
         }
         return connection;
     }
-    
-    // This method is used to close the connection to the database
+
     public static void closeConnection() {
         if (connection != null) {
             try {

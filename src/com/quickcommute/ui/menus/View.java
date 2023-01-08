@@ -68,7 +68,7 @@ public class View {
                 System.out.println("Tiket Festival Musik");
             }
             case "4" -> {
-                EditProfile editProfile = new EditProfile();
+                new EditProfile();
             }
             case "5" -> {
                 System.out.println(
